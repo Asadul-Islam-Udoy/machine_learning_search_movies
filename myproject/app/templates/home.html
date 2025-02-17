@@ -1,0 +1,97 @@
+{% extends "master.html" %} {% block content %}
+<div
+  class="content w-100 h-100 py-5 row d-flex justify-content-center align-items-center bg-primary"
+>
+  <div class="col-md-6 w-100%">
+    <h1 style="color: #ff6600" class="text-red">Search Movie</h1>
+    <form id="ajax-form" class="m-2">
+      <select
+        id="title"
+        name="title"
+        class="form-select"
+        aria-label="Default select example"
+      >
+        <option selected>Open this select menu</option>
+        {% for item in data %}
+        <option value="{{item}}">{{item}}</option>
+        {% endfor %}
+      </select>
+      <div class="d-flex m-2 justify-content-end">
+        <button id="button-1" class="py-1 px-5" type="submit">Submit</button>
+
+        <button
+          id="button-2"
+          style="display: none"
+          class="btn py-1 px-5 btn-info"
+          type="button"
+          disabled
+        >
+          <span
+            class="spinner-border spinner-border-sm"
+            role="status"
+            aria-hidden="true"
+          ></span>
+          <span class="visually-hidden">Loading...</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="py-5 w-100">
+  <div id="response_data" class="card-group m-10"></div>
+  <script>
+    $(document).ready(function () {
+      // When the form is submitted
+      $("#ajax-form").on("submit", function (event) {
+        event.preventDefault(); // Prevent the default form submission
+        // Get form data
+        var title = $("#title").val();
+        $("#button-2").show();
+        $("#button-1").hide();
+        // Send AJAX POST request
+        $.ajax({
+          url: '{% url "ajax_post" %}', // Django URL that handles the AJAX request
+          type: "POST",
+          data: {
+            title: title,
+            csrfmiddlewaretoken: "{{ csrf_token }}", // CSRF token for safety
+          },
+          success: function (response) {
+            // Update the response div with the server's response
+            if (response.status === "success") {
+              $("#response_data").empty();
+              var listHtml = "";
+              response.data.forEach(function (item) {
+                listHtml += '<div class="card m-1">';
+                listHtml += '<a href="' + item.image + '">';
+                listHtml +=
+                  '<img  height="300px"  class="card-img-top" src="' +
+                  item.image +
+                  '" alt="' +
+                  item.title +
+                  '">';
+                listHtml += "</a>";
+                listHtml += '<div class="card-body">';
+                listHtml += "<span class='font-bold'>" + item.title + "</span>";
+                listHtml += "</div>";
+                listHtml += "</div>";
+              });
+              $("#response_data").append(listHtml);
+              $("#button-2").hide();
+              $("#button-1").show();
+            } else {
+              $("#response_data").html("<p>Error: " + response.error + "</p>");
+              $("#button-2").hide();
+              $("#button-1").show();
+            }
+          },
+          error: function (xhr, status, error) {
+            // Handle errors
+            $("#response").html("<p>An error occurred: " + error + "</p>");
+          },
+        });
+      });
+    });
+  </script>
+</div>
+{% endblock%}
